@@ -1,0 +1,58 @@
+###################
+# BUILD FOR LOCAL DEVELOPMENT
+###################
+
+FROM node:18-alpine As development
+RUN apk add --no-cache python3 g++ make
+
+WORKDIR /usr/src/app
+
+COPY --chown=node:node package.json yarn.lock* ./
+
+# Install app dependencies using the `npm ci` command instead of `npm install`
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  else yarn install; \
+  fi
+
+COPY --chown=node:node . .
+
+USER node
+
+###################
+# BUILD FOR PRODUCTION
+###################
+
+FROM node:18-alpine As build
+
+WORKDIR /usr/src/app
+
+COPY --chown=node:node package.json yarn.lock* ./
+
+COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
+
+COPY --chown=node:node . .
+
+RUN npm run build
+
+ENV NODE_ENV production
+
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile --production; \
+  else yarn install --production; \
+  fi
+
+USER node
+
+###################
+# PRODUCTION
+###################
+
+FROM node:18-alpine As production
+
+COPY --chown=node:node .env .env
+COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
+COPY --chown=node:node --from=build /usr/src/app/dist ./dist
+
+EXPOSE 3000
+CMD [ "node", "dist/main.js" ]

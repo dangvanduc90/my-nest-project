@@ -1,0 +1,34 @@
+version: '3.5'
+
+services:
+  app:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile-dev
+    image: test1
+    container_name: nest-docker
+    user: node
+    ports:
+      - '3000:3000'
+    # depends_on:
+    #   - mongodb
+    volumes:
+      - ./src:/app/src
+
+  # mongodb:
+  #   container_name: mongodb
+  #   image: mongo
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - './data/mongo:/data/db'
+
+  # mongo-express:
+  #   image: mongo-express
+  #   ports:
+  #     - "8082:8081"
+  #   depends_on:
+  #     - mongodb
+  #   restart: always
+  #   environment:
+  #     - ME_CONFIG_MONGODB_SERVER=mongodb
